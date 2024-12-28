@@ -41,3 +41,6 @@ def login_admin():
         time.sleep(2)
         utama()
 
+def menu_admin():
+    hapus
+
