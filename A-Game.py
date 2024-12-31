@@ -4,6 +4,7 @@ import time
 from tabulate import tabulate as tb
 import csv
 import random
+import datetime
 
 def utama():
     os.system('cls')
@@ -49,14 +50,14 @@ def login_user():
     global username
     username = input('Masukkan username : ').lower()
     password = input('Masukkan password : ').lower()
+    data = pd.read_csv('csv/user.csv')
     if not os.path.exists('csv/user.csv'):
         with open('csv/user.csv','w',newline='') as file:
             writer = csv.writer(file)
-            writer.writerow(['username','password','saldo','poin'])
+            writer.writerow(['username','password','saldo','poin','total menang','total kekalahan','total permainan'])
         input('Tekan ENTER untuk refresh >>>')
         login_user()
     elif os.path.exists('csv/user.csv'):
-        data = pd.read_csv('csv/user.csv')
         user = data[(data['username'] == username) & (data['password'] == password)]
         if not user.empty:
             print(f'Selamat datang {username}...')
@@ -80,24 +81,129 @@ def login_user():
         login_user()
 
 def menu_user():
-    os.system('cls')
-    print('='*40)
-    print('MENU PENGGUNA A-GAME'.center(40))
-    print('='*40)
-    print('''1. Lihat profil
+    while True:
+        os.system('cls')
+        print('='*40)
+        print('MENU PENGGUNA A-GAME'.center(40))
+        print('='*40)
+        print('''1. Lihat profil
 2. Bermain
 3. isi saldo
-4. Tukar poin
-5. Ketentuan
-6. Keluar''')
-    inputUser = int(input('Masukkan pilihan anda : '))
-    if inputUser == 1:
+4. History isi saldo
+5. Tukar poin
+6. Ketentuan
+7. Keluar''')
+        try:
+            inputUser = int(input('Masukkan pilihan anda : '))
+        except ValueError:
+            print('Harus berupa angka dan tidak boleh kosong')
+            time.sleep(2)
+            continue
+        if inputUser == 1:
+            os.system('cls')
+            print('Membawa anda ke halaman...')
+            time.sleep(2)
+            lihat_profil()
+        elif inputUser == 2:
+            bermain()
+        elif inputUser == 3:
+            isi_saldo()
+        elif inputUser == 4:
+            histori_saldo()
+        elif inputUser == 5:
+            tukar_poin()
+        elif inputUser == 6:
+            ketentuan()
+        elif inputUser == 7:
+            utama()
+
+def ketentuan():
+    os.system('cls')
+    print('='*40)
+    print('KETENTUAN'.center(40))
+    print('='*40)
+    print('1. TIDAK MINIMAL UNTUK PENUKARAN POIN MENJADI SALDO')
+    print('2. PENGGUNA BERMAIN DENGAN KESADARAN SENDIRI')
+    print('3. TIDAK ADA REFUND JIKA KALAH BERMAIN GAME KAMI (LOL)')
+    print('4. PASTIKAN KALIAN PAHAM JIKA KATA KAK GEM')
+    input('Tekan ENTER untuk kembali >>> ')
+    menu_user()
+
+def tukar_poin():
+    while True:
         os.system('cls')
-        print('Membawa anda ke halaman...')
+        print('='*40)
+        print('TUKAR POIN'.center(40))
+        print('='*40)
+        data = pd.read_csv('csv/user.csv')
+        cek = data.loc[data['username'] == username]
+        poin = cek['poin'].values[0]
+        print(f'Poin anda sebanyak = ', poin)
+        try:
+            inputUser = int(input('Masukkan jumlah poin yang ingin ditukar : '))
+        except ValueError:
+            print('Harus berupa angka dan tidak boleh kosong')
+            time.sleep(2)
+            continue
+        if inputUser > poin:
+            print('Poin anda kurang, mohon input dengan benar')
+            time.sleep(2)
+            continue
+        elif inputUser < 1:
+            print('Maaf tidak valid...')
+            time.sleep(2)
+            continue
+        elif inputUser <= poin:
+            data.loc[data['username'] == username, 'poin'] -= inputUser
+            data.loc[data['username'] == username, 'saldo'] += inputUser
+            data.to_csv('csv/user.csv',index=False)
+            print('Selamat, anda berhasil mengubah poin menjadi saldo...')
+            time.sleep(2)
+            menu_user()
+
+
+def isi_saldo():
+    os.system('cls')
+    hari = datetime.datetime.today()
+    va = random.randint(10000,99000)
+    data = pd.read_csv('csv/user.csv')
+    print('='*40)
+    print('ISI SALDO'.center(40))
+    print('='*40)
+    inputUser = int(input('Jumlah saldo : '))
+    print('Sedang memverifikasi pembayaran...')
+    time.sleep(2)
+    if not os.path.exists('csv/historisaldo.csv'):
+        with open('csv/historisaldo.csv', 'w', newline='') as file:
+            writer = csv.writer(file)
+            writer.writerow(['jumlah saldo', 'nomor pembayaran', 'tanggal'])
+        input('Terjadi update tekan ENTER untuk refresh >>> ')
+        isi_saldo()
+    elif os.path.exists('csv/historisaldo.csv'):
+        with open('csv/historisaldo.csv','a',newline='') as file:
+            tulis = csv.writer(file)
+            tulis.writerow([inputUser,va,hari])
+        data.loc[data['username'] == username, 'saldo'] += inputUser
+        data.to_csv('csv/user.csv')
+        print('Selamat saldo anda telah terisi...')
         time.sleep(2)
-        lihat_profil()
-    if inputUser == 2:
-        bermain()
+        menu_user()
+
+def histori_saldo():
+    os.system('cls')
+    data = pd.read_csv('csv/historisaldo.csv')
+    if not os.path.exists('csv/historisaldo.csv'):
+        with open('csv/historisaldo.csv', 'w', newline='') as file:
+            writer = csv.writer(file)
+            writer.writerow(['jumlah saldo', 'nomor pembayaran', 'tanggal'])
+        input('Terjadi update tekan ENTER untuk refresh >>> ')
+        histori_saldo()
+    else:
+        data.index = range(1,len(data)+1)
+        print(tb(data,headers='keys',tablefmt='grid'))
+        input('Tekan ENTER untuk kembali >>> ')
+        menu_user()
+
 
 def bermain():
     global taruhan
@@ -109,7 +215,8 @@ def bermain():
     print('PERMAINAN'.center(40))
     print('='*40)
     print('''1. Tebak angka
-2. Batu Kertas Gunting''')
+2. Batu Kertas Gunting
+3. Keluar''')
     print(f'Saldo = {saldo}')
     try:
         inputUser = int(input('Masukkan pilihan permainan : '))
@@ -155,6 +262,8 @@ def bermain():
                 data.to_csv('csv/user.csv',index=False)
                 time.sleep(2)
                 jankepon()
+    elif inputUser == 3:
+        menu_user()
     else:
         print('Tidak ada di pilihan...')
         time.sleep(2)
@@ -167,53 +276,80 @@ def jankepon():
     sistemTangan = tanganSistem[acak]
     tanganLawanSistem = ['kertas','gunting','batu']
     data = pd.read_csv('csv/user.csv')
-    print('='*40)
-    print('BATU - KERTAS - GUNTING'.center(40))
-    print('='*40)
-    print('''1. Kertas
+    cek = data.loc[data['username'] == username]
+    saldo = cek['saldo'].values[0]
+    while True:
+        print('='*40)
+        print('BATU - KERTAS - GUNTING'.center(40))
+        print('='*40)
+        print('''1. Kertas
 2. gunting
 3. Batu''')
-    inputuser = int(input('Masukkan pilihan anda : ')) - 1
-    if tanganLawanSistem[inputuser] == 'batu':
-        if sistemTangan == 'kertas':
-            print(f'Sayangnya anda kalah, sistem memilih {sistemTangan} dan anda memilih {tanganLawanSistem[inputuser]}')
-            time.sleep(4)
-            bermain()
-        elif sistemTangan == 'gunting':
-            print('Selamat anda menang, Saldo anda akan ditambah dengan total taruhan x 2')
-            data.loc[data['username'] == username, 'saldo'] += taruhan * 2
-            data.loc[data['username'] == username, 'poin'] += 100
+        inputuser = int(input('Masukkan pilihan anda : ')) - 1
+        if tanganLawanSistem[inputuser] == sistemTangan:
+            print('Seri, tidak ada yang menang saldo akan dikembalikan...')
+            data.loc[data['username'] == username, 'saldo'] += taruhan
             data.to_csv('csv/user.csv',index=False)
-            time.sleep(4)
+            time.sleep(2)
+        elif tanganLawanSistem[inputuser] == 'batu':
+            if sistemTangan == 'kertas':
+                print(f'Sayangnya anda kalah, sistem memilih {sistemTangan} dan anda memilih {tanganLawanSistem[inputuser]}')
+                data.loc[data['username'] == username, 'total kekalahan'] += 1
+                data.to_csv('csv/user.csv',index=False)
+                time.sleep(4)
+            elif sistemTangan == 'gunting':
+                print('Selamat anda menang, Saldo anda akan ditambah dengan total taruhan x 2')
+                data.loc[data['username'] == username, 'saldo'] += taruhan * 2
+                data.loc[data['username'] == username, 'poin'] += 100
+                data.loc[data['username'] == username, 'total menang'] += 1
+                data.to_csv('csv/user.csv',index=False)
+                time.sleep(4)
+        elif tanganLawanSistem[inputuser] == 'kertas':
+            if sistemTangan == 'gunting':
+                print(f'Sayangnya anda kalah, sistem memilih {sistemTangan} dan anda memilih {tanganLawanSistem[inputuser]}')
+                data.loc[data['username'] == username, 'total kekalahan'] += 1
+                data.to_csv('csv/user.csv',index=False)
+                time.sleep(4)
+            elif sistemTangan == 'batu':
+                print('Selamat anda menang, Saldo anda akan ditambah dengan total taruhan x 2')
+                data.loc[data['username'] == username, 'saldo'] += taruhan * 2
+                data.loc[data['username'] == username, 'poin'] += 100
+                data.loc[data['username'] == username, 'total menang'] += 1
+                data.to_csv('csv/user.csv',index=False)
+                time.sleep(4)
+        elif tanganLawanSistem[inputuser] == 'gunting':
+            if sistemTangan == 'batu':
+                print(f'Sayangnya anda kalah, sistem memilih {sistemTangan} dan anda memilih {tanganLawanSistem[inputuser]}')
+                data.loc[data['username'] == username, 'total kekalahan'] += 1
+                data.to_csv('csv/user.csv',index=False)
+                time.sleep(4)
+            elif sistemTangan == 'kertas':
+                print('Selamat anda menang, Saldo anda akan ditambah dengan total taruhan x 2')
+                data.loc[data['username'] == username, 'saldo'] += taruhan * 2
+                data.loc[data['username'] == username, 'poin'] += 100
+                data.loc[data['username'] == username, 'total menang'] += 1
+                data.to_csv('csv/user.csv',index=False)
+                time.sleep(4)
+        else:
+            print('Tidak ada di pilihan...')
+            time.sleep(2)
             bermain()
-    elif tanganLawanSistem[inputuser] == 'kertas':
-        if sistemTangan == 'gunting':
-            print(f'Sayangnya anda kalah, sistem memilih {sistemTangan} dan anda memilih {tanganLawanSistem[inputuser]}')
-            time.sleep(4)
+
+        pilihan = input('Apakah anda ingin bermain lagi [y][t] : ')
+        if pilihan == 'y':
+            if saldo < taruhan:
+                print('Saldo tidak mencukupi...')
+                time.sleep(2)
+                bermain()
+            else:
+                data.loc[data['username'] == username, 'saldo'] -= taruhan
+                data.to_csv('csv/user.csv',index=False)
+                os.system('cls')
+                continue
+        else:
+            print('terima kasih telah bermain...')
+            time.sleep(2)
             bermain()
-        elif sistemTangan == 'batu':
-            print('Selamat anda menang, Saldo anda akan ditambah dengan total taruhan x 2')
-            data.loc[data['username'] == username, 'saldo'] += taruhan * 2
-            data.loc[data['username'] == username, 'poin'] += 100
-            data.to_csv('csv/user.csv',index=False)
-            time.sleep(4)
-            bermain()
-    elif tanganLawanSistem[inputuser] == 'gunting':
-        if sistemTangan == 'batu':
-            print(f'Sayangnya anda kalah, sistem memilih {sistemTangan} dan anda memilih {tanganLawanSistem[inputuser]}')
-            time.sleep(4)
-            bermain()
-        elif sistemTangan == 'kertas':
-            print('Selamat anda menang, Saldo anda akan ditambah dengan total taruhan x 2')
-            data.loc[data['username'] == username, 'saldo'] += taruhan * 2
-            data.loc[data['username'] == username, 'poin'] += 100
-            data.to_csv('csv/user.csv',index=False)
-            time.sleep(4)
-            bermain()
-    else:
-        print('Tidak ada di pilihan...')
-        time.sleep(2)
-        bermain()
 
 def tebak_angka():
     os.system('cls')
@@ -233,6 +369,7 @@ def tebak_angka():
             data = pd.read_csv('csv/user.csv')
             data.loc[data['username'] == username, 'saldo'] += taruhan * 2
             data.loc[data['username'] == username, 'poin'] += 100
+            data.loc[data['username'] == username, 'total menang'] += 1
             data.to_csv('csv/user.csv',index=False)
             print('Selamat anda menang, taruhan anda akan dikali 2 dan menjadi saldo...')
             time.sleep(2)
@@ -257,6 +394,8 @@ def tebak_angka():
             data = pd.read_csv('csv/user.csv')
             cek = data.loc[data['username'] == username]
             saldo = cek['saldo'].values[0]
+            data.loc[data['username'] == username, 'total kekalahan'] += 1
+            data.to_csv('csv/user.csv',index=False)
             print(f'Tebakan anda salah, angka yang benar adalah {acak}')
             a = input('ingin bermain lagi dgn taruhan tetap? [y][t] : ')
             if a == 'y':
@@ -316,7 +455,7 @@ def daftar_user():
     else:
         with open('csv/user.csv','a',newline='') as file:
             writer = csv.writer(file)
-            writer.writerow([inputUser,inputPass,saldo,poin])
+            writer.writerow([inputUser,inputPass,saldo,poin, 0,0,0])
         print('Selamat kamu berhasil terdaftar di A-Game...')
         time.sleep(2)
         login_user()
@@ -359,12 +498,14 @@ def cek_user():
     if not os.path.exists('csv/user.csv'):
         with open('csv/user.csv', 'w', newline='') as file:
             writer = csv.writer(file)
-            writer.writerow(['username','password','saldo','poin'])
+            writer.writerow(['username','password','saldo','poin','total menang','total kekalahan','total permainan'])
         print('File belum ada, dan baru saja dibuat')
         input('Tekan ENTER untuk refresh >>>')
         cek_user()
     elif os.path.exists('csv/user.csv'):
         data = pd.read_csv('csv/user.csv')
+        data['total permainan'] = data['total menang'] + data['total kekalahan']
+        data.to_csv('csv/user.csv',index=False)
         data.index = range(1,len(data)+1)
         print(tb(data,headers='keys',tablefmt='grid'))
         input('Tekan ENTER untuk kembali >>>')
