@@ -36,6 +36,9 @@ def login_admin():
     inputUsername = input('Masukkan Username : ').lower()
     inputPassword = input('Masukkan Password : ').lower()
     if inputUsername == 'admin' and inputPassword == '123':
+        os.system('cls')
+        print('Membawa anda ke halaman admin...')
+        time.sleep(2)
         menu_admin()
     else:
         print('Akun tidak ditemukan...')
@@ -116,6 +119,10 @@ def menu_user():
             ketentuan()
         elif inputUser == 7:
             utama()
+        else:
+            print('Tidak ada di pilihan...')
+            time.sleep(2)
+            continue
 
 def ketentuan():
     os.system('cls')
@@ -176,15 +183,15 @@ def isi_saldo():
     if not os.path.exists('csv/historisaldo.csv'):
         with open('csv/historisaldo.csv', 'w', newline='') as file:
             writer = csv.writer(file)
-            writer.writerow(['jumlah saldo', 'nomor pembayaran', 'tanggal'])
+            writer.writerow(['username','jumlah saldo', 'nomor pembayaran', 'tanggal'])
         input('Terjadi update tekan ENTER untuk refresh >>> ')
         isi_saldo()
     elif os.path.exists('csv/historisaldo.csv'):
         with open('csv/historisaldo.csv','a',newline='') as file:
             tulis = csv.writer(file)
-            tulis.writerow([inputUser,va,hari])
+            tulis.writerow([username,inputUser,va,hari])
         data.loc[data['username'] == username, 'saldo'] += inputUser
-        data.to_csv('csv/user.csv')
+        data.to_csv('csv/user.csv',index=False)
         print('Selamat saldo anda telah terisi...')
         time.sleep(2)
         menu_user()
@@ -195,12 +202,13 @@ def histori_saldo():
     if not os.path.exists('csv/historisaldo.csv'):
         with open('csv/historisaldo.csv', 'w', newline='') as file:
             writer = csv.writer(file)
-            writer.writerow(['jumlah saldo', 'nomor pembayaran', 'tanggal'])
+            writer.writerow(['username','jumlah saldo', 'nomor pembayaran', 'tanggal'])
         input('Terjadi update tekan ENTER untuk refresh >>> ')
         histori_saldo()
     else:
         data.index = range(1,len(data)+1)
-        print(tb(data,headers='keys',tablefmt='grid'))
+        sesuaiUsername = data.loc[data['username'] == username]
+        print(tb(sesuaiUsername,headers='keys',tablefmt='grid'))
         input('Tekan ENTER untuk kembali >>> ')
         menu_user()
 
@@ -462,39 +470,39 @@ def daftar_user():
 
 
 def menu_admin():
-    os.system('cls')
-    print('='*40)
-    print('MENU ADMIN'.center(40))
-    print('='*40) 
-    print('''1. Cek User
+    while True:
+        os.system('cls')
+        print('='*40)
+        print('MENU ADMIN'.center(40))
+        print('='*40) 
+        print('''1. Cek User
 2. Kelola User
-3. Laporan
-4. History Deposit
-5. Keluar''')
-    try:
-        inputUser = int(input('Masukkan Pilihan : '))
-        if inputUser == 1:
-            cek_user()
-        elif inputUser == 2:
-            kelola_user()
-        elif inputUser == 3:
-            laporan()
-        elif inputUser == 4:
-            history_depo()
-        elif inputUser == 5:
-            utama()
-        else:
-            print('tidak ada di pilihan...')
+3. History Deposit
+4. Keluar''')
+        try:
+            inputUser = int(input('Masukkan Pilihan : '))
+            if inputUser == 1:
+                os.system('cls')
+                print('Membawa anda ke halaman...')
+                time.sleep(2)
+                cek_user()
+            elif inputUser == 2:
+                kelola_user()
+            elif inputUser == 3:
+                history_depo()
+            elif inputUser == 4:
+                utama()
+            else:
+                print('tidak ada di pilihan...')
+                time.sleep(2)
+                continue
+        except ValueError:
+            print('Harus angka...')
             time.sleep(2)
-            menu_admin()
-    except ValueError:
-        print('Harus angka...')
-        time.sleep(2)
-        utama()
+            continue
 
 def cek_user():
     os.system('cls')
-    saldo = 0
     if not os.path.exists('csv/user.csv'):
         with open('csv/user.csv', 'w', newline='') as file:
             writer = csv.writer(file)
@@ -512,13 +520,147 @@ def cek_user():
         menu_admin()
 
 def kelola_user():
-    os.system('cls')
+    while True:
+        os.system('cls')
+        print('='*40)
+        print('KELOLA USER'.center(40))
+        print('='*40)
+        print('''1. Tambah pengguna
+2. Hapus pengguna
+3. Tambah poin pengguna
+4. Tambah saldo pengguna
+5. Keluar''')
+        try:
+            inputUser = int(input('Masukkan pilihan : '))
+        except ValueError:
+            print('Harus angka dan tidak boleh kosong...')
+            time.sleep(2)
+            continue
+        if inputUser == 1:
+            tambah_pengguna()
+        elif inputUser == 2:
+            hapus_pengguna()
+        elif inputUser == 3:
+            tambah_poin()
+        elif inputUser == 4:
+            tambah_saldo()
+        elif inputUser == 5:
+            menu_admin()
 
-def laporan():
-    os.system('cls')
+def tambah_saldo():
+    while True:
+        os.system('cls')
+        data = pd.read_csv('csv/user.csv')
+        print('='*40)
+        print('TAMBAH SALDO'.center(40))
+        print('='*40)
+        inputUser = input('Masukkan username yang ingin ditambah : ')
+        if inputUser in data['username'].values:
+            try:
+                inputSaldo = int(input('Masukkan jumlah saldo yang ditambah : '))
+            except ValueError:
+                print('Harus angka dan tidak boleh kosong!')
+                time.sleep(2)
+                continue
+            if inputSaldo < 5000:
+                print('Minimal 5000 untuk melakukan pengisian...')
+            else:
+                data.loc[data['username'] == inputUser, 'saldo'] += inputSaldo
+                data.to_csv('csv/user.csv',index=False)
+                print('selamat, saldo pengguna telah terisi sebesar', inputSaldo)
+                time.sleep(2)
+                kelola_user()
+        else:
+            print('Username tidak ditemukan...')
+            time.sleep(2)
+            continue
+
+def tambah_poin():
+    while True:
+        os.system('cls')
+        data = pd.read_csv('csv/user.csv')
+        print('='*40)
+        print('TAMBAH POIN'.center(40))
+        print('='*40)
+        inputUser = input('Masukkan username yang ingin ditambah : ')
+        if inputUser in data['username'].values:
+            try:
+                inputPoin = int(input('Masukkan poin yang ingin ditambah : '))
+            except ValueError:
+                print('Harus angka dan tidak boleh kosong!')
+                time.sleep(2)
+                continue
+            if inputPoin <= 0:
+                print('Minimal adalah 1 untuk menambah...')
+                time.sleep(2)
+                continue
+            data.loc[data['username'] == inputUser, 'poin'] += inputPoin
+            data.to_csv('csv/user.csv',index=False)
+            print(f'Selamat, poin user telah ditambah sebesar {inputPoin} ')
+            time.sleep(2)
+            kelola_user()
+        else:
+            print('Username tidak ditemukan...')
+            time.sleep(2)
+            continue
+
+
+
+def hapus_pengguna():
+    while True:
+        os.system('cls')
+        print('='*40)
+        print('HAPUS PENGGUNA'.center(40))
+        print('='*40)
+        data = pd.read_csv('csv/user.csv')
+        inputUser = input('Masukkan username yang ingin dihapus : ')
+        if inputUser in data['username'].values:
+            data = data.loc[data['username'] != inputUser]
+            data.to_csv('csv/user.csv',index=False)
+            print('Selamat username telah berhasil dihapus...')
+            time.sleep(2)
+            kelola_user()
+        else:
+            print('Username tidak ditemukan...')
+            time.sleep(2)
+            continue
+
+def tambah_pengguna():
+    while True:
+        os.system('cls')
+        data = pd.read_csv('csv/user.csv')
+        print('='*40)
+        print('TAMBAH PENGGUNA'.center(40))
+        print('='*40)
+        inputUsername = input('Masukkan username baru : ')
+        if inputUsername in data['username'].values:
+            print('Username Telah Digunakan, Gunakan Username Lain...')
+            time.sleep(2)
+            continue
+        else:
+            inputPassword = input('Masukkan password : ')
+            if not os.path.exists('csv/user.csv'):
+                with open('csv/user.csv','w',newline='') as file:
+                    writer = csv.writer(file)
+                    writer.writerow(['username','password','saldo','poin','total menang','total kekalahan','total permainan'])
+                input('Terjadi Update silahkan ENTER untuk merefresh >>> ')
+                time.sleep(2)
+                continue
+            else:
+                with open('csv/user.csv','a',newline='') as file:
+                    writer = csv.writer(file)
+                    writer.writerow([inputUsername,inputPassword,0,0,0,0,0])
+                print('Selamat pengguna baru telah ditambahkan...')
+                time.sleep(2)
+                kelola_user()
 
 def history_depo():
     os.system('cls')
+    data = pd.read_csv('csv/historisaldo.csv')
+    data.index = range(1,len(data)+1)
+    print(tb(data,headers='keys',tablefmt='grid'))
+    input('Tekan ENTER untuk kembali >>> ')
+    menu_admin()
 
 
 utama()
